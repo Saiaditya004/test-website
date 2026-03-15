@@ -1,0 +1,26 @@
+{
+  "timestamp": "2026-03-15T06:53:02.492Z",
+  "repoPath": "C:\\Users\\saiad\\OneDrive\\Desktop\\test-web",
+  "projectName": "test-web",
+  "environment": "production",
+  "selectedPlatform": "vercel",
+  "platformSource": "override",
+  "inferredFramework": "vite",
+  "dryRun": false,
+  "requiresTerraform": false,
+  "workflowPath": ".github/workflows/deploy.yml",
+  "checklistPath": "SETUP_CHECKLIST.md",
+  "workflowSecrets": [
+    "SLACK_WEBHOOK_URL",
+    "VERCEL_ORG_ID",
+    "VERCEL_PROJECT_ID",
+    "VERCEL_TOKEN"
+  ],
+  "checklistSecrets": [
+    "SLACK_WEBHOOK_URL",
+    "VERCEL_ORG_ID",
+    "VERCEL_PROJECT_ID",
+    "VERCEL_TOKEN"
+  ],
+  "warnings": []
+}

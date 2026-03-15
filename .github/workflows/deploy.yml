@@ -1,0 +1,89 @@
+name: Deploy
+"on":
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+jobs:
+  deploy-frontend:
+    name: Deploy frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build
+        run: npm run build
+      - name: Deploy to Vercel
+        id: deploy
+        run: |-
+          vercel --prod --token $VERCEL_TOKEN
+          # Capture live URL — replace the placeholder with the actual URL output of your deploy tool
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Health check
+        id: health
+        run: curl --retry 5 --retry-delay 10 --fail ${{ steps.deploy.outputs.url }}
+      - name: Rollback
+        if: failure() && steps.health.outcome == 'failure' && steps.deploy.outputs.previous_revision != ''
+        run: vercel rollback --token $VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: "{\"text\":\"Deployment ${{ job.status }}: ${{ github.repository }} @ ${{ github.sha }}\"}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  deploy-backend:
+    name: Deploy backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Build
+        run: pip install -r requirements.txt
+      - name: Deploy to Vercel
+        id: deploy
+        run: |-
+          vercel --prod --token $VERCEL_TOKEN
+          # Capture live URL — replace the placeholder with the actual URL output of your deploy tool
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Health check
+        id: health
+        run: curl --retry 5 --retry-delay 10 --fail ${{ steps.deploy.outputs.url }}
+      - name: Rollback
+        if: failure() && steps.health.outcome == 'failure' && steps.deploy.outputs.previous_revision != ''
+        run: vercel rollback --token $VERCEL_TOKEN
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: "{\"text\":\"Deployment ${{ job.status }}: ${{ github.repository }} @ ${{ github.sha }}\"}"
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
